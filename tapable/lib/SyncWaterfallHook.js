@@ -13,13 +13,18 @@ class SyncWaterfallHookCodeFactory extends HookCodeFactory {
 			onError: (i, err) => onError(err),
 			onResult: (i, result, next) => {
 				let code = "";
+				
+				//**********************************************
+				//     repeat this;
 				code += `if(${result} !== undefined) {\n`;
 				code += `${this._args[0]} = ${result};\n`;
 				code += `}\n`;
+				//**********************************************
 				code += next();
+
 				return code;
 			},
-			onDone: () => onResult(this._args[0]),
+			onDone: () => onResult(this._args[0]), // depends on call type, in the 'sync' case, it simply returns result; 
 			rethrowIfPossible
 		});
 	}

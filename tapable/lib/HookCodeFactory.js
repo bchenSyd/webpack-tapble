@@ -14,12 +14,21 @@ class HookCodeFactory {
 		this.init(options);
 		switch(this.options.type) {
 			case "sync":
-				return new Function(this.args(), "\"use strict\";\n" + this.header() + this.content({
+				const function_body = "\"use strict\";\n" + this.header() + this.content({
 					onError: err => `throw ${err};\n`,
-					onResult: result => `return ${result};\n`,
-					onDone: () => "",
+					onResult: result => {
+						debugger; // one plugin parse completes;
+						return `return ${result};\n`
+					},
+					onDone: () => {
+						debugger;
+						// all plugins parese complete;
+						return "";
+					},
 					rethrowIfPossible: true
-				}));
+				});
+				debugger;
+				return new Function(this.args(), function_body);
 			case "async":
 				return new Function(this.args({
 					after: "_callback"
