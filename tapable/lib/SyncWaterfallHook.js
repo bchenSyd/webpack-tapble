@@ -7,13 +7,30 @@
 const Hook = require("./Hook");
 const HookCodeFactory = require("./HookCodeFactory");
 
+
+function __generated_normal_module_factory() {
+	var _fn0 = _x[0]; // buildin one;
+	var _result0 = _fn0(factory);
+	if (_result0 !== undefined) {
+		factory = _result0;
+	}
+	var _fn1 = _x[1]; // plugin one;
+	var _result1 = _fn1(factory);
+	if (_result1 !== undefined) {
+		factory = _result1;
+	}
+	return factory;
+}
+
+
+
 class SyncWaterfallHookCodeFactory extends HookCodeFactory {
 	content({ onError, onResult, onDone, rethrowIfPossible }) {
-		return this.callTapsSeries({
+		const fBody = this.callTapsSeries({
 			onError: (i, err) => onError(err),
 			onResult: (i, result, next) => {
 				let code = "";
-				
+
 				//**********************************************
 				//     repeat this;
 				code += `if(${result} !== undefined) {\n`;
@@ -27,6 +44,8 @@ class SyncWaterfallHookCodeFactory extends HookCodeFactory {
 			onDone: () => onResult(this._args[0]), // depends on call type, in the 'sync' case, it simply returns result; 
 			rethrowIfPossible
 		});
+		debugger;
+		return fBody;
 	}
 }
 
@@ -35,7 +54,7 @@ const factory = new SyncWaterfallHookCodeFactory();
 class SyncWaterfallHook extends Hook {
 	constructor(args) {
 		super(args);
-		if(args.length < 1) throw new Error("Waterfall hooks must have at least one argument");
+		if (args.length < 1) throw new Error("Waterfall hooks must have at least one argument");
 	}
 
 	tapAsync() {
