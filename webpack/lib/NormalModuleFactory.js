@@ -110,8 +110,10 @@ class NormalModuleFactory extends Tapable {
 		this.generatorCache = Object.create(null);
 		this.hooks.factory.tap("NormalModuleFactory", () => {
 			// native plugin called;
-			debugger; 
+			debugger;
 			return (result, callback) => {
+
+				debugger;
 				let resolver = this.hooks.resolver.call(null);
 
 				// Ignored

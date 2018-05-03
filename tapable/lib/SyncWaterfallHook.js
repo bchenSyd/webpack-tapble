@@ -12,13 +12,22 @@ function __generated_normal_module_factory() {
 	var _fn0 = _x[0]; // buildin one;
 	var _result0 = _fn0(factory);
 	if (_result0 !== undefined) {
-		factory = _result0;
+		factory = _result0; // this the default factory function that native NMF (normal module factory) returns
 	}
 	var _fn1 = _x[1]; // plugin one;
-	var _result1 = _fn1(factory);
+
+
+	// ######################################################################################################################
+	//      the result of 1st plugin(native plugin), becomes the parameter of 2nd plugin
+			var _result1 = _fn1(factory); 
+	// ######################################################################################################################
+	
+	
 	if (_result1 !== undefined) {
-		factory = _result1;
+		factory = _result1; // this is the plugin NMF (normal module factory);
 	}
+
+	// plugin version of NMF will override the default version of NMF
 	return factory;
 }
 
