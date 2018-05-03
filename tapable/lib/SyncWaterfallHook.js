@@ -8,7 +8,8 @@ const Hook = require("./Hook");
 const HookCodeFactory = require("./HookCodeFactory");
 
 
-function __generated_normal_module_factory() {
+// it's a middleware pattern
+function __generated_normal_module_factory__middleware() {
 	var _fn0 = _x[0]; // buildin one;
 	var _result0 = _fn0(factory);
 	if (_result0 !== undefined) {
@@ -24,10 +25,10 @@ function __generated_normal_module_factory() {
 	
 	
 	if (_result1 !== undefined) {
-		factory = _result1; // this is the plugin NMF (normal module factory);
+		factory = _result1; // this is the 2nd plugin NMF returned value, with 1st plugin's return value as input para;
 	}
 
-	// plugin version of NMF will override the default version of NMF
+	// the last plugin prevail;
 	return factory;
 }
 
