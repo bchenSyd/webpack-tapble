@@ -20,7 +20,8 @@ class Hook {
 		throw new Error("Abstract: should be overriden");
 	}
 
-	_createCall(type) {
+	_createCall_on_the_fly(type) {
+		// build up a function on the fly;
 		return this.compile({
 			taps: this.taps,
 			interceptors: this.interceptors,
@@ -31,9 +32,16 @@ class Hook {
 
 	_createCompileDelegate(name, type) {
 		const lazyCompileHook = (...args) => {
-			this[name] = this._createCall(type);
-			return this[name](...args);
+			// buidl AST tree here;
+			this[name] = this._createCall_on_the_fly(type);
+
+			// your plugin function called here; //bochen todo;
+			function _call_the_dynamic_generated_function(){
+				return this[name](...args)
+			}
+			return  _call_the_dynamic_generated_function.bind(this)();
 		};
+
 		return lazyCompileHook;
 	}
 

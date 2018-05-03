@@ -108,41 +108,45 @@ class NormalModuleFactory extends Tapable {
 		this.context = context || "";
 		this.parserCache = Object.create(null);
 		this.generatorCache = Object.create(null);
-		this.hooks.factory.tap("NormalModuleFactory", () => (result, callback) => {
-			let resolver = this.hooks.resolver.call(null);
-
-			// Ignored
-			if (!resolver) return callback();
-
-			resolver(result, (err, data) => {
-				if (err) return callback(err);
+		this.hooks.factory.tap("NormalModuleFactory", () => {
+			// native plugin called;
+			debugger; 
+			return (result, callback) => {
+				let resolver = this.hooks.resolver.call(null);
 
 				// Ignored
-				if (!data) return callback();
+				if (!resolver) return callback();
 
-				// direct module
-				if (typeof data.source === "function") return callback(null, data);
-
-				this.hooks.afterResolve.callAsync(data, (err, result) => {
+				resolver(result, (err, data) => {
 					if (err) return callback(err);
 
 					// Ignored
-					if (!result) return callback();
+					if (!data) return callback();
 
-					let createdModule = this.hooks.createModule.call(result);
-					if (!createdModule) {
-						if (!result.request) {
-							return callback(new Error("Empty dependency (no request)"));
+					// direct module
+					if (typeof data.source === "function") return callback(null, data);
+
+					this.hooks.afterResolve.callAsync(data, (err, result) => {
+						if (err) return callback(err);
+
+						// Ignored
+						if (!result) return callback();
+
+						let createdModule = this.hooks.createModule.call(result);
+						if (!createdModule) {
+							if (!result.request) {
+								return callback(new Error("Empty dependency (no request)"));
+							}
+
+							createdModule = new NormalModule(result);
 						}
 
-						createdModule = new NormalModule(result);
-					}
+						createdModule = this.hooks.module.call(createdModule, result);
 
-					createdModule = this.hooks.module.call(createdModule, result);
-
-					return callback(null, createdModule);
+						return callback(null, createdModule);
+					});
 				});
-			});
+			}
 		});
 		this.hooks.resolver.tap("NormalModuleFactory", () => (data, callback) => {
 			const contextInfo = data.contextInfo;
@@ -397,7 +401,7 @@ class NormalModuleFactory extends Tapable {
 											"\n" +
 											"BREAKING CHANGE: It's no longer allowed to omit the '-loader' suffix when using loaders.\n" +
 											`                 You need to specify '${
-												item.loader
+											item.loader
 											}-loader' instead of '${item.loader}',\n` +
 											"                 see https://webpack.js.org/guides/migrating/#automatic-loader-module-name-extension-removed";
 									}
@@ -409,8 +413,8 @@ class NormalModuleFactory extends Tapable {
 
 						const optionsOnly = item.options
 							? {
-									options: item.options
-							  }
+								options: item.options
+							}
 							: undefined;
 						return callback(
 							null,
