@@ -445,8 +445,9 @@ class Compiler extends Tapable {
 			this.resolverFactory,
 			this.options.module || {}
 		);
-		this.hooks.normalModuleFactory.call(normalModuleFactory);
-		return normalModuleFactory;
+		this.hooks.normalModuleFactory.call(normalModuleFacagtory);
+		// tag: NMF null; #NMFNULL
+		return normalModuleFactory; // always return the original NMF plugin, ie. the native NMF plugin; that why you can return null in your NMF plugins;
 	}
 
 	createContextModuleFactory() {

@@ -46,12 +46,59 @@ const identToLoaderRequest = resultString => {
 	}
 };
 
+function myNMFPlugin(compiler /*which is webpack top-level hook*/) {
+	var ModuleFilenameHelpers = require('./ModuleFilenameHelpers');
+	var ExternalModule = require('./ExternalModule');
+	compiler.hooks.normalModuleFactory.tap('my NMF plugin', __builtIn_nmf => {
+		// /opt/git/webpack-tapble/webpack/lib/NormalModuleFactory.js, line 379
+		// this.hooks.beforeResolve.callAsync({contextInfo, request...}, (err, result)=>{    this.hooks.factory.call(null);     })
+		__builtIn_nmf.hooks.factory.tap('my NMF factory plugin', _buildin_factory_function /* default factory_functin provided by webpack*/ => {
+			// triggered by Tabpable.hooks.factory.call(null);
+			debugger;
+			console.info("=========================================================================");
+			console.info(" my previous plugin's output is now my input ");
+			console.info("=========================================================================");
+
+			// the customerizedFactoryFunction, or finalFactoryFunction, is all the outsides world can see;
+			const customerizedFactoryFunction = (__preResolve_result, callback) => {
+				debugger;
+				// as you can see
+				_buildin_factory_function(__preResolve_result, function (err, module /* the normal module that native nmf resolved */) {
+					if (err) {
+						return callback(err);
+					}
+					if (ModuleFilenameHelpers.matchObject(opts, module.resource)) {
+						return callback(null, new ExternalModule(
+							__preResolve_result.request,
+							opts.type || compiler.options.output.libraryTarget
+						));
+					}
+					callback(null, module);
+				});
+			};
+			return customerizedFactoryFunction;// must return something;  last ring in the chain;
+		});
+		// we should return something; return __builtIn_nmf maybe; but it's not neccessary as 
+		//  /opt/git/webpack-tapble/webpack/lib/Compiler.js line:449 alway use the default nmf;
+		return null;  //  shouldn't I return a new nmf as result?? as the last ring in the chain;  search: #NMFNULL
+	});
+}
+
+
+
+
 class NormalModuleFactory extends Tapable {
 	constructor(context, resolverFactory, options) {
 		super();
 		this.hooks = {
-			resolver: new SyncWaterfallHook(["resolver"]),
-			factory: new SyncWaterfallHook(["factory"]),
+			//#################################################
+			// hook.tap(      'plugin-name', (...args)=> Result         ) => void;
+			// i.e tap() itself has no return value (i.e. doesn't return a token or id),
+			//     but the plugin function need to return an result, so that it can be chained;
+			resolver: new SyncWaterfallHook(["resolver"]), // sync
+			factory: new SyncWaterfallHook(["factory"]),  // sync 
+			//#################################################
+
 			beforeResolve: new AsyncSeriesWaterfallHook(["data"]),
 			afterResolve: new AsyncSeriesWaterfallHook(["data"]),
 			createModule: new SyncBailHook(["data"]),
@@ -111,9 +158,21 @@ class NormalModuleFactory extends Tapable {
 		this.hooks.factory.tap("NormalModuleFactory", () => {
 			// native plugin called;
 			debugger;
-			return (result, callback) => {
-
+			// this.hooks.factory is responsible for building factory functions;
+			const factoryFunction = (result, callback) => {
 				debugger;
+				/*
+				beforeResolve Result: {
+					"contextInfo":{"issuer":""},
+					"resolveOptions":{},
+					"context":"/opt/tmp/webpack-test",
+					"request":"./src/index.js",
+					"dependencies":[
+						{"module":null,"weak":false,"optional":false,"loc":"main","request":"./src/index.js",
+						"userRequest":"./src/index.js"}
+					]
+				}
+				*/
 				let resolver = this.hooks.resolver.call(null);
 
 				// Ignored
@@ -148,7 +207,8 @@ class NormalModuleFactory extends Tapable {
 						return callback(null, createdModule);
 					});
 				});
-			}
+			};
+			return factoryFunction; // Result;
 		});
 		this.hooks.resolver.tap("NormalModuleFactory", () => (data, callback) => {
 			const contextInfo = data.contextInfo;
@@ -355,12 +415,25 @@ class NormalModuleFactory extends Tapable {
 				// Ignored
 				if (!result) return callback();
 
-				const factory = this.hooks.factory.call(null);
+				//################################################################################################
+				// plugin invoke order: ordered by stage, first in, best dressed;
+				const factory = this.hooks.factory.call(null /*trigger factory hook; build up factory function;*/);
+				console.info(`__________________________________________________________________________________________________________________________________________________________________________\n`);
 
-				// Ignored
+				console.info(`as far as outside's concern, factory is is set to the return value of last hooks.factory.tap('last-plugin', (initFactoryFunction)=>newFactoryFunction   `)
+				console.info(`__________________________________________________________________________________________________________________________________________________________________________`);
+				//################################################################################################
+
+
+				// Ignored. there the last plugin return null, i.e. NO FACTORY FUNCTION, 
+				// which basiclly fucked up everything; webpack won't be able to create modules; factory function is missing;
 				if (!factory) return callback();
 
-				factory(result, (err, module) => {
+				//######################################################################################
+				//explicitly call the Result, which is factory function, returns by this.hooks.factory;			
+				factory(result, (err, module) => {  // tag: call factory function; factoryF 
+					//######################################################################################
+
 					if (err) return callback(err);
 
 					if (module && this.cachePredicate(module)) {
